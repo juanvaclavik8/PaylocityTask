@@ -1,0 +1,18 @@
+UI BUG REPORT
+
+I used chrome Version 128.0.6613.120 (Official Build) (64-bit) for Windows
+
+-------------------------------------------------------------------
+Actual Behavior: It is possible to input decimal in dependents textbox, number is rounded down to int
+Expected Behavior: Shouldnt be possible to save employee + visual and contextual info what th error is
+Reproduction: Click Add Employee, insert firstName, lastName and in dependents decimal number, click add
+-------------------------------------------------------------------
+Actual Behavior: Max dependents is 32, min 0
+Expected Behavior: When >32 or <0 dependents inserted, user should be notified what is max and min (range)
+Reproduction: Click Add Employee, insert firstName, lastName and in dependents number, click add
+-------------------------------------------------------------------
+Actual Behavior: No visual notification if required text boxes left blank
+Expected Behavior: Visual notification + asterisk on required fields
+Reproduction: insert different value types than expected to fields - e.g. denendents--> stringinstead of int
+-------------------------------------------------------------------
+Update modal has "Add Employee" title

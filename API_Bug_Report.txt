@@ -1,0 +1,166 @@
+API BUG REPORT
+
+I used Postman with provided api call test suite
+
+######################################################################################################################################
+GET EMPLOYEE LIST
+-------------------------------------------------------------------
+Actual Behavior: When GET api call method changed to POST/PUT, 415 Unsupported Media Type error response obtained 
+Expected Behavior: Should return 400 Bad request for POST - no body with new employee data provided, because it actually changes to ADD EMPLOYEE endpoint. For PUT should return 400 Bad Request because no EmplyeeID provided in url (Actually UPDATE EMPLOYEE endpoint)
+Reproduction: POST/PUT https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees 
+-------------------------------------------------------------------
+Actual Behavior: When endpoint called with JSON in body, it returns 403 Forbidden
+Expected Behavior: Should return 400 Bad Request with appropriate error message
+Reproduction: GET https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": "Novak",
+    "dependants": 4
+}
+######################################################################################################################################
+ADD EMPLOYEE
+-------------------------------------------------------------------
+Actual Behavior: When Employee created, returns 200 status code (OK)
+Expected Behavior: Should return 201 status code (Created)
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": "Vanek",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When Employee created with only special chars in firstName/lastName , returns 200 status code (OK)
+Expected Behavior: Should prevent creating such user, 400 Bad Request
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": "#####",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When Employee created with whitespace followed by special chars in firstName/lastName , returns 200 status code (OK)
+Expected Behavior: Should prevent creating such user (it works just with whitespace correctly " ", but string checking should be more strict with strings like " ##")
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": " ##",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When endpoint called with incorrect data type (int, string) for employee object props, returns 405 Method Not Allowed, good behavior is that such Employee has not been created when Get Employee List endpoint called.
+Expected Behavior: Should return 400 Bad Request with message explaining which data were incorrectly inserted
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": 4, // passed int instead of string (works similarly for other params as well)
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When no JSON body provided, returns 405 Method not allowed
+Expected Behavior: Should return 400 Bad Request with appropriate message
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+no body
+-------------------------------------------------------------------
+Actual Behavior: When JSON body without required param, returns 405 Method not allowed
+Expected Behavior: Should return 400 Bad Request with appropriate message
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    // missing lastName param
+    "dependants": "kdsfksfd"
+}
+-------------------------------------------------------------------
+Actual Behavior: When JSON body with redundant param, returns 200 and employee created
+Expected Behavior: Should return 400 Bad Request with appropriate message
+Reproduction: POST https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees
+{
+    "firstName": "Jan",
+    "lastName": "Vac",
+    "dependants": 1,
+    "redundantParam": "lorem ipsum" // redundant param
+}
+######################################################################################################################################
+GET EMPLOYEE
+-------------------------------------------------------------------
+Actual Behavior: When non existing Employee ID passed, 500 Internal Server Error response obtained
+Expected Behavior: Should return 404 Not Found status code with appropriate error message
+Reproduction: GET https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/nonexisting-id
+-------------------------------------------------------------------
+Actual Behavior: When JSON body passed, returns 403 Forbidden
+Expected Behavior: Should return 400 Bad Request with explaining error message
+Reproduction: GET https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/9ee64ca8-ea32-4038-a484-c2bd6e89c92d
+{
+    "firstName": "Martin",
+    "lastName": "Vanek",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When JSON body passed, returns 403 Forbidden
+Expected Behavior: Should return 400 Bad Request with explaining error message
+Reproduction: GET https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/9ee64ca8-ea32-4038-a484-c2bd6e89c92d
+{
+    "firstName": "Martin",
+    "lastName": "Vanek",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When previously deleted employee requested, returns 200 with no body response
+Expected Behavior: Should return 404 Not Found with explaining message
+Reproduction: Create Employee, get his ID, Delete employee, Get employee by ID (returns 200)
+######################################################################################################################################
+UPDATE EMPLOYEE
+-------------------------------------------------------------------
+Actual Behavior: When DELETED employee updated, returns 200, endpoint creates new employee with new id and salary and gross are nulled
+Expected Behavior: Should return 404 not found and explaining message
+Reproduction: Call Create, delete, update and check update response body
+-------------------------------------------------------------------
+Actual Behavior: When nonexisting EmplyeeID passed, returns 405 Method not allowed
+Expected Behavior: Should return 404 not found and explaining message
+Reproduction: PUT https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/
+{
+    "id": "00f0b3e9-7b2d-42e7-a207-25878eca8e1",
+    "firstName": "Wanda",
+    "lastName": "Maximoff",
+    "dependants": 4
+}
+-------------------------------------------------------------------
+Actual Behavior: When redundant param passed in JSON, returns 200
+Expected Behavior: Should return 400 Bad request with explaining message
+Reproduction: PUT https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/
+{
+    "id": "9ee64ca8-ea32-4038-a484-c2bd6e89c92d",
+    "firstName": "Wanda",
+    "lastName": "Maximoff",
+    "dependants": 4,
+    "redundantParam": "lorem ipsum"
+}
+-------------------------------------------------------------------
+Actual Behavior: When missing required param in JSON, returns 200 and employee updated
+Expected Behavior: Should return 400 Bad request with explaining message
+Reproduction: PUT https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/
+{
+    "id": "9ee64ca8-ea32-4038-a484-c2bd6e89c92d",
+    "firstName": "Wanda",
+    "lastName": "Maximoff" //,
+    // "dependants": 4 
+}
+-------------------------------------------------------------------
+Actual Behavior: When no JSON body provided, returns 405 Method not allowed
+Expected Behavior: Should return 400 Bad Request
+Reproduction: PUT https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/
+no body
+######################################################################################################################################
+DELETE EMPLOYEE
+-------------------------------------------------------------------
+Actual Behavior: When nonexisting ID passed, returns 200
+Expected Behavior: Should return 404 Not found with explaining message
+Reproduction: DELETE https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/nonexisting-id
+-------------------------------------------------------------------
+Actual Behavior: When no ID passed, returns 405 Method Not allowed
+Expected Behavior: Should return 400 Bad Request with message (ID must be provided)
+Reproduction: DELETE https://wmxrwq14uc.execute-api.us-east-1.amazonaws.com/Prod/api/employees/
+-------------------------------------------------------------------
+Actual Behavior: When Employee deleted and deletion repeated, returns 200
+Expected Behavior: Should return 404 Not Found with explaining message
+Reproduction: Call delete endpoint multiple times for the same ID
+######################################################################################################################################
